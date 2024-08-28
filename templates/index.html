@@ -10,7 +10,7 @@
         <div class="top-navigator">
             <img class="title-image" src="{{ url_for('static', filename='img/bisdak_logo.png') }}">
         </div>
-        <div class="main-container">
+        <div class="main-container" id="main-container">
             <p class="error-message" id="error-message"></p>
             <p class="success-message" id="success-message"></p>
             <label for="destination_address">DESTINATION ADDRESS:</label>
@@ -49,25 +49,23 @@
         const sendButton = document.getElementById("send_button");
         const errorMessage = document.getElementById("error-message");
         const successMessage = document.getElementById("success-message");
-
-        function sendHttp(url, method="GET", data=null) {
-            const xmlHttp = new XMLHttpRequest();
-            xmlHttp.open(method, url, false);
-            if (method == "POST") {
-                xmlHttp.setRequestHeader(name="Content-Type", value="application/json");
-            }
-            xmlHttp.send(data);
-            return xmlHttp.responseText;
-        }
+        const mainContainer = document.getElementById("main-container");
 
         function showError(error_message) {
             errorMessage.innerText = error_message;
             errorMessage.style.display = "block";
+            mainContainer.scrollTo(0, 0);
         };
 
         function showSuccess(success_message) {
             successMessage.innerHTML = success_message;
             successMessage.style.display = "block";
+            mainContainer.scrollTo(0, 0);
+        }
+
+        function hideMessages() {
+            errorMessage.style.display = "none";
+            successMessage.style.display = "none";
         }
 
         errorMessage.onclick = (event) => {
@@ -78,32 +76,40 @@
             successMessage.style.display = "none";
         }
 
-        wallet.onchange = (event) => {
-            currency.innerText = "";
+        wallet.onchange = async (event) => {
+            hideMessages();
 
+            currency.innerHTML = "<option selected disabled hidden>Fetching wallet. Please wait...</options>";
             let inputText = event.target.value;
 
-            const accountBalance = JSON.parse(sendHttp(`/wallet/balance?wallet_address=${inputText}&ws_address=${server.value}`));
-            const optionElement = document.createElement("option");
-            optionElement.value = `{"currency": "${accountBalance.currency_name}", "balance": "${accountBalance.balance}"}`;
-            optionElement.innerText = `${accountBalance.currency_name} (Balance: ${accountBalance.balance})`;
-            currency.appendChild(optionElement);
-            console.log(`Added child: ${optionElement}`);
+            const accountBalance = await fetch(`/wallet/balance?wallet_address=${inputText}&ws_address=${server.value}`, {
+                method: "GET"
+            }).then((response) => response.json());
+
+            if ("error" in accountBalance) {
+                return showError(`Error: ${accountBalance["error"]}`)
+            }
             
-            const accountLines = JSON.parse(sendHttp(`/wallet/trustlines?wallet_address=${inputText}&ws_address=${server.value}`));
+            const accountLines = await fetch(`/wallet/trustlines?wallet_address=${inputText}&ws_address=${server.value}`, {
+                method: "GET"
+            }).then((response) => response.json());
+
+            currency.innerHTML = "";
+            const optionElement = document.createElement("option");
+            optionElement.value = JSON.stringify(accountBalance);
+            optionElement.innerText = `${accountBalance.currency} (Balance: ${accountBalance.balance})`;
+            currency.appendChild(optionElement);
 
             accountLines.forEach(trustline => {
                 const optionElement = document.createElement("option");
                 optionElement.value = JSON.stringify(trustline);
                 optionElement.innerText = `${trustline.currency} (Balance: ${trustline.balance})`;
                 currency.appendChild(optionElement);
-                console.log(`Added child: ${optionElement}`);
             });
         }
 
         sendButton.onclick = async (event) => {
-            errorMessage.style.display = "none";
-            successMessage.style.display = "none";
+            hideMessages();
 
             if (destinationAddress.value.trim() == "") {
                 return showError("Error: Missing destination address.");
@@ -126,6 +132,10 @@
 
             let destination_tag = destinationTag.value.trim();
             let amount_value = parseFloat(amount.value.trim());
+
+            if (!amount_value) {
+                return showError("Error: Invalid amount value.");
+            }
 
             if (amount_value > JSON.parse(currency.value).balance) {
                 return showError("Error: Insufficient balance.");
@@ -160,8 +170,6 @@
                 },
                 body: JSON.stringify(payload)
             }).then((response) => response.json());
-            
-            console.log(response);
 
             if ("error" in response) {
                 showError(`Error: ${response.error}`);
