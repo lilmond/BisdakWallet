@@ -29,22 +29,25 @@ def payment_send():
 
     req_keys = {
         "destination_address": str,
-        "destination_tag": int,
+        "destination_tag": [int, type(None)],
         "currency": dict,
-        "amount": float,
+        "amount": [float, int],
         "server": str,
         "wallet": str,
         "password": str
     }
 
     for key in req_keys:
-        key_type = req_keys[key]
-
         if not key in data:
             return {"error": f"Missing key: {key}"}, 400
         
-        if not type(data[key]) == req_keys[key]:
-            return {"error": f"{key} expects {req_keys[key]} type, not {type(data[key])}."}, 400
+        if (type(req_keys[key]) != list):
+            if not type(data[key]) == req_keys[key]:
+                return {"error": f"{key} expects {req_keys[key]} type, not {type(data[key])}."}, 400
+            
+        else:
+            if not type(data[key]) in req_keys[key]:
+                return {"error": f"{key} expects {req_keys[key]} type, not {type(data[key])}."}, 400
     
     destination_address = data["destination_address"]
     destination_tag = data["destination_tag"]
@@ -84,7 +87,6 @@ def payment_send():
         currency_issuer = currency["account"]
         amount = IssuedCurrencyAmount(currency=currency_name, issuer=currency_issuer, value=amount)
 
-    #signed = autofill_and_sign(transaction=payment_tx, client=client, wallet=xrpl_wallet)
     try:
         network_id = 21337 if server_type == "Xahau" else None
         payment_tx = Payment(account=xrpl_wallet.address, fee="12", destination=destination_address, destination_tag=destination_tag, amount=amount, network_id=network_id)
@@ -92,7 +94,7 @@ def payment_send():
         result = client.request(request=requests.SubmitOnly(tx_blob=signed.blob())).result
     except Exception as e:
         print(e)
-        return str(e), 400
+        return {"error": str(e)}, 400
     
     return result, 200
 
