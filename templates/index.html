@@ -19,10 +19,11 @@
             <input name="destination_tag" id="destination_tag" type="number"/>
             <label for="currency">CURRENCY:</label>
             <select name="currency" id="currency">
-                <option selected disabled hidden>SELECT A WALLET FIRST</option>
+                <option selected disabled hidden>Please select a wallet.</option>
             </select>
             <label for="amount">AMOUNT:</label>
-            <input name="amount" id="amount" type="text"/>
+            <button id="max-amount-button" class="max-amount-button">MAX</button>
+            <input name="amount" id="amount" type="number"/>
             <hr class="separator">
             <label for="server">SERVER:</label>
             <select name="server" id="server">
@@ -30,12 +31,12 @@
             </select>
             <label for="wallet">WALLET:</label>
             <select name="wallet" id="wallet">
-                <option selected disabled hidden>SELECT WALLET</option>
+                <option selected disabled hidden>Select a wallet here!</option>
                 {%for wallet_address in wallets%}<option value="{{wallet_address}}">{{wallet_address}}</option>{%endfor%}
             </select>
             <label for="password">PASSWORD:</label>
             <input name="password" type="password" id="password"/>
-            <button id="send_button">Send</button>
+            <button id="send_button" class="send-button">Send</button>
         </div>
     </body>
     <script type="text/javascript">
@@ -50,6 +51,7 @@
         const errorMessage = document.getElementById("error-message");
         const successMessage = document.getElementById("success-message");
         const mainContainer = document.getElementById("main-container");
+        const maxAmountButton = document.getElementById("max-amount-button");
 
         function showError(error_message) {
             errorMessage.innerText = error_message;
@@ -76,21 +78,21 @@
             successMessage.style.display = "none";
         }
 
-        wallet.onchange = async (event) => {
+        async function loadWallet() {
             hideMessages();
 
             currency.innerHTML = "<option selected disabled hidden>Fetching wallet. Please wait...</options>";
-            let inputText = event.target.value;
 
-            const accountBalance = await fetch(`/wallet/balance?wallet_address=${inputText}&ws_address=${server.value}`, {
+            const accountBalance = await fetch(`/wallet/balance?wallet_address=${wallet.value}&ws_address=${server.value}`, {
                 method: "GET"
             }).then((response) => response.json());
 
             if ("error" in accountBalance) {
-                return showError(`Error: ${accountBalance["error"]}`)
+                currency.innerHTML = "<option selected disabled hidden>Please select a wallet.</option>";
+                return showError(`Error: ${accountBalance["error"]}`);
             }
             
-            const accountLines = await fetch(`/wallet/trustlines?wallet_address=${inputText}&ws_address=${server.value}`, {
+            const accountLines = await fetch(`/wallet/trustlines?wallet_address=${wallet.value}&ws_address=${server.value}`, {
                 method: "GET"
             }).then((response) => response.json());
 
@@ -106,9 +108,25 @@
                 optionElement.innerText = `${trustline.currency} (Balance: ${trustline.balance})`;
                 currency.appendChild(optionElement);
             });
+        };
+
+        server.onchange = async () => {
+            if (wallet.value != "Select a wallet here!") {
+                await loadWallet();
+            };
+        };
+
+        wallet.onchange = async () => {
+            await loadWallet();
+        };
+
+        maxAmountButton.onclick = () => {
+            try {
+                amount.value = JSON.parse(currency.value)["balance"];
+            } catch {}
         }
 
-        sendButton.onclick = async (event) => {
+        sendButton.onclick = async () => {
             hideMessages();
 
             if (destinationAddress.value.trim() == "") {
@@ -142,7 +160,7 @@
             }
 
             if (destination_tag == "") {
-                destination_tag = -1;
+                destination_tag = null;
             } else {
                 destinationTag = parseInt(destination_tag)
             }
