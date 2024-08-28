@@ -110,6 +110,7 @@ body {
 
 .error-message {
     font-family: sans-serif;
+    font-weight: bold;
     color: red;
     background-color: rgba(255, 0, 0, 0.2);
     padding: 5px 0;
@@ -117,10 +118,12 @@ body {
     margin-bottom: 2px;
     text-align: center;
     display: none;
+    font-size: 18px;
 }
 
 .success-message {
     font-family: sans-serif;
+    font-weight: bold;
     color: rgb(0, 255, 0);
     background-color: rgba(0, 255, 0, 0.2);
     padding: 5px 0;
@@ -128,4 +131,5 @@ body {
     margin-bottom: 2px;
     text-align: center;
     display: none;
+    font-size: 18px;
 }
