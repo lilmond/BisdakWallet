@@ -1,0 +1,6 @@
+[SERVERS]
+XRP = ["https://xrplcluster.com/"]
+Xahau = ["https://xahau.network/"]
+
+[UTILITY]
+PASSWORD = "bisdakwallet!@#"
