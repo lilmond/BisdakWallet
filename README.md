@@ -15,3 +15,6 @@ python app.py
 # Usage
 - Edit config/seeds.txt and PASSWORD in config/config.toml
 - Open (127.0.0.1:8080), you can access this on your mobile since the app is listening to (0.0.0.0). Just make sure you type the correct IP address and have port forwarding on in your router.
+
+# Donate
+Support this project by donating. Any amount will be appreciated! (rpWJmMcPM4ynNfvhaZFYmPhBq5FYfDJBZu:2135011618), please don't forget the destination tag. Thank you!
