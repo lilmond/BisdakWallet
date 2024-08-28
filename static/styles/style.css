@@ -53,12 +53,20 @@ body {
     margin-bottom: 5px;
     font-size: 100%;
     font-weight: bold;
-    background-color: #171a21;
+    background-color: rgb(30, 30, 30);
     text-align: center;
     color: #0030cf;
 }
 
-.main-container button {
+.main-container .max-amount-button {
+    font-family: monospace;
+    font-weight: bold;
+    color: #0030cf;
+    background: transparent;
+    float: right;
+}
+
+.main-container .send-button {
     border-radius: 2px;
     font-size: 100%;
     font-weight: bold;
@@ -68,7 +76,7 @@ body {
     color: white;
 }
 
-.main-container button:hover {
+.main-container .send-button:hover {
     cursor: pointer;
 }
 
