@@ -108,23 +108,23 @@ def wallet_info():
     args = request.args
 
     if not args:
-        return "No arguments passed", 400
+        return {"error": "Missing arguments"}, 400
     
     if not all(["wallet_address" in args, "ws_address" in args]):
-        return "No wallet_address or ws_address passed.", 400
+        return {"error": "No wallet_address or ws_address passed."}, 400
     
     wallet_address = args["wallet_address"]
     ws_address = args["ws_address"]
     server_type = get_server_type(ws_address)
 
     if not server_type:
-        return "Invalid server address", 400
+        return {"error": "Invalid server address"}, 400
     
     client = JsonRpcClient(ws_address)
     account_info = client.request(request=requests.AccountInfo(account=wallet_address)).result
 
     if "error" in account_info:
-        return account_info["error_message"], 400
+        return {"error": account_info["error_message"]}, 400
     
     account_balance = drops_to_xrp(account_info["account_data"]["Balance"])
 
@@ -132,7 +132,7 @@ def wallet_info():
     if server_type == "Xahau":
         currency_name = "XAH"
     
-    return {"balance": account_balance, "currency_name": currency_name}, 200
+    return {"balance": account_balance, "currency": currency_name}, 200
 
 @app.route("/wallet/trustlines", methods=["GET"])
 def wallet_trustlines():
