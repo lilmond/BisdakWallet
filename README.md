@@ -1,6 +1,8 @@
 # BisdakWallet
 Web XRP/XAH wallet. Access your XRP wallet anywhere.
 
+<img src="https://github.com/lilmond/BisdakWallet/blob/main/static/img/wallet_preview.png?raw=true"/>
+
 # Installation
 Windows 10
 ```
