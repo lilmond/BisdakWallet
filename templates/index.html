@@ -162,7 +162,7 @@
             if (destination_tag == "") {
                 destination_tag = null;
             } else {
-                destinationTag = parseInt(destination_tag)
+                destination_tag = parseInt(destination_tag)
             }
 
             if (amount_value < 0) {
@@ -201,7 +201,7 @@
                     let tx_url = `https://xrpscan.com/tx/${tx_json.hash}`;
                     if ("NetworkID" in tx_json) {
                         if (tx_json.NetworkID == 21337) {
-                            tx_url = `https://xrpscan.com/tx/${tx_json.hash}`;
+                            tx_url = `https://xahscan.com/tx/${tx_json.hash}`;
                         }
                     }
                     showSuccess(`Success: ${response.engine_result} | <a href="${tx_url}" target="_blank">View Transaction</a>`);
