@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en-US">
+    <head>
+        <meta charset="utf-8"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+        <title>Bisdak Wallet</title>
+        <link rel= "stylesheet" type= "text/css" href="{{ url_for('static', filename='styles/style.css') }}">
+    </head>
+    <body>
+        <div class="top-navigator">
+            <img class="title-image" src="{{ url_for('static', filename='img/bisdak_logo.png') }}">
+        </div>
+        <div class="main-container">
+            <p class="error-message" id="error-message"></p>
+            <p class="success-message" id="success-message"></p>
+            <label for="destination_address">DESTINATION ADDRESS:</label>
+            <input name="destination_address" id="destination_address" type="text"/>
+            <label for="destination_tag">DESTINATION TAG:</label>
+            <input name="destination_tag" id="destination_tag" type="number"/>
+            <label for="currency">CURRENCY:</label>
+            <select name="currency" id="currency">
+                <option selected disabled hidden>SELECT A WALLET FIRST</option>
+            </select>
+            <label for="amount">AMOUNT:</label>
+            <input name="amount" id="amount" type="text"/>
+            <hr class="separator">
+            <label for="server">SERVER:</label>
+            <select name="server" id="server">
+                {%for server_type in servers%}{%for server_address in servers[server_type]%}<option value="{{server_address}}">{{server_address}} ({{server_type}})</option>{%endfor%}{%endfor%}
+            </select>
+            <label for="wallet">WALLET:</label>
+            <select name="wallet" id="wallet">
+                <option selected disabled hidden>SELECT WALLET</option>
+                {%for wallet_address in wallets%}<option value="{{wallet_address}}">{{wallet_address}}</option>{%endfor%}
+            </select>
+            <label for="password">PASSWORD:</label>
+            <input name="password" type="password" id="password"/>
+            <button id="send_button">Send</button>
+        </div>
+    </body>
+    <script type="text/javascript">
+        const destinationAddress = document.getElementById("destination_address");
+        const destinationTag = document.getElementById("destination_tag");
+        const currency = document.getElementById("currency");
+        const amount = document.getElementById("amount");
+        const server = document.getElementById("server");
+        const wallet = document.getElementById("wallet");
+        const password = document.getElementById("password");
+        const sendButton = document.getElementById("send_button");
+        const errorMessage = document.getElementById("error-message");
+        const successMessage = document.getElementById("success-message");
+
+        function sendHttp(url, method="GET", data=null) {
+            const xmlHttp = new XMLHttpRequest();
+            xmlHttp.open(method, url, false);
+            if (method == "POST") {
+                xmlHttp.setRequestHeader(name="Content-Type", value="application/json");
+            }
+            xmlHttp.send(data);
+            return xmlHttp.responseText;
+        }
+
+        function showError(error_message) {
+            errorMessage.innerText = error_message;
+            errorMessage.style.display = "block";
+        };
+
+        function showSuccess(success_message) {
+            successMessage.innerHTML = success_message;
+            successMessage.style.display = "block";
+        }
+
+        errorMessage.onclick = (event) => {
+            errorMessage.style.display = "none";
+        };
+
+        wallet.onchange = (event) => {
+            currency.innerText = "";
+
+            let inputText = event.target.value;
+
+            const accountBalance = JSON.parse(sendHttp(`/wallet/balance?wallet_address=${inputText}&ws_address=${server.value}`));
+            const optionElement = document.createElement("option");
+            optionElement.value = `{"currency": "${accountBalance.currency_name}", "balance": "${accountBalance.balance}"}`;
+            optionElement.innerText = `${accountBalance.currency_name} (Balance: ${accountBalance.balance})`;
+            currency.appendChild(optionElement);
+            console.log(`Added child: ${optionElement}`);
+            
+            const accountLines = JSON.parse(sendHttp(`/wallet/trustlines?wallet_address=${inputText}&ws_address=${server.value}`));
+
+            accountLines.forEach(trustline => {
+                const optionElement = document.createElement("option");
+                optionElement.value = JSON.stringify(trustline);
+                optionElement.innerText = `${trustline.currency} (Balance: ${trustline.balance})`;
+                currency.appendChild(optionElement);
+                console.log(`Added child: ${optionElement}`);
+            });
+        }
+
+        sendButton.onclick = async (event) => {
+            errorMessage.style.display = "none";
+            successMessage.style.display = "none";
+
+            if (destinationAddress.value.trim() == "") {
+                return showError("Error: Missing destination address.");
+            }
+            else if (currency.value.trim() == "SELECT A WALLET FIRST") {
+                return showError("Error: Missing currency option.");
+            }
+            else if (amount.value.trim() == "") {
+                return showError("Error: Missing amount.");
+            }
+            else if (server.value.trim() == "") {
+                return showError("Error: Invalid server.");
+            }
+            else if (wallet.value.trim() == "") {
+                return showError("Error: Missing wallet.");
+            }
+            else if (password.value.trim() == "") {
+                return showError("Error: Missing password.");
+            }
+
+            let destination_tag = destinationTag.value.trim();
+            let amount_value = parseFloat(amount.value.trim());
+
+            if (amount_value > JSON.parse(currency.value).balance) {
+                return showError("Error: Insufficient balance.");
+            }
+
+            if (destination_tag == "") {
+                destination_tag = -1;
+            } else {
+                destinationTag = parseInt(destination_tag)
+            }
+
+            if (amount_value < 0) {
+                return showError("Error: Amount value must be greater than 0!");
+            }
+
+            const payload = {
+                destination_address: destinationAddress.value.trim(),
+                destination_tag: destination_tag,
+                currency: JSON.parse(currency.value.trim()),
+                amount: amount_value,
+                server: server.value,
+                wallet: wallet.value,
+                password: password.value,
+            };
+
+            sendButton.disabled = true;
+            sendButton.style.backgroundColor = "#0c226b";
+            const response = await fetch("/payment/send", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(payload)
+            }).then((response) => response.json());
+            
+            console.log(response);
+
+            if ("error" in response) {
+                showError(`Error: ${response.error}`);
+            }
+            else if ("engine_result" in response) {
+                if (response.engine_result != "tesSUCCESS") {
+                    showError(`Error: ${response.engine_result} | ${response.engine_result_message}`);
+                }
+                else {
+                    const tx_json = response.tx_json;
+                    let tx_url = `https://xrpscan.com/tx/${tx_json.hash}`;
+                    if ("NetworkID" in tx_json) {
+                        if (tx_json.NetworkID == 21337) {
+                            tx_url = `https://xrpscan.com/tx/${tx_json.hash}`;
+                        }
+                    }
+                    showSuccess(`Success: ${response.engine_result} | <a href="${tx_url}" target="_blank">View Transaction</a>`);
+                }
+            }
+
+            sendButton.disabled = false;
+            sendButton.style.backgroundColor = "#0030d0"
+        };
+
+        destinationAddress.onchange = () => {
+            localStorage.setItem("destinationAddressValue", destinationAddress.value);
+        };
+        destinationTag.onchange = () => {
+            localStorage.setItem("destinationTagValue", destinationTag.value);
+        }
+        amount.onchange = () => {
+            localStorage.setItem("amountValue", amount.value);
+        }
+
+        destinationAddress.value = localStorage.getItem("destinationAddressValue");
+        destinationTag.value = localStorage.getItem("destinationTagValue");
+        amount.value = localStorage.getItem("amountValue");
+    </script>
+</html>
