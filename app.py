@@ -58,8 +58,9 @@ def payment_send():
     password = data["password"]
     currency_name = currency["currency"]
 
-    if (destination_tag < 0):
-        destination_tag = None
+    if (destination_tag != None):
+        if (destination_tag < 0):
+            destination_tag = None
     
     if (amount < 0):
         return {"error": f"Invalid amount: {amount}"}, 400
