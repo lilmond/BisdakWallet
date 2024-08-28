@@ -1,5 +1,5 @@
 # BisdakWallet
-Web XRP/XAH wallet.
+Web XRP/XAH wallet. Access your XRP wallet anywhere.
 
 # Installation
 Windows 10
