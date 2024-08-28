@@ -1,5 +1,5 @@
 # BisdakWallet
-Web XRP/XAH wallet. Access your XRP wallet anywhere.
+Web XRP/XAH wallet. Securely access your XRP wallet anywhere.
 
 <img src="https://github.com/lilmond/BisdakWallet/blob/main/static/img/wallet_preview.png?raw=true"/>
 
