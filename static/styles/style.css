@@ -58,12 +58,13 @@ body {
     color: #0030cf;
 }
 
-.main-container .max-amount-button {
+.main-container .input-right-upper-button {
     font-family: monospace;
     font-weight: bold;
     color: #0030cf;
     background: transparent;
     float: right;
+    margin-left: 5px;
 }
 
 .main-container .send-button {
