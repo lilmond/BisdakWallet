@@ -1,3 +1,4 @@
 xrpl-py==2.6.0
 Flask
 toml
+pyopenssl
