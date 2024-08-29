@@ -1,7 +1,7 @@
 # BisdakWallet
 Open-source web XRP/XAH wallet. Securely and privately access your XRP wallet anywhere on the globe.
 
-<img src="https://github.com/lilmond/BisdakWallet/blob/main/static/img/wallet_preview2.png?raw=true"/>
+<img src="https://github.com/lilmond/BisdakWallet/blob/main/static/img/wallet_preview3.png?raw=true"/>
 
 # Installation
 Windows 10
