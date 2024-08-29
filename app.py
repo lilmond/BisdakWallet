@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template
+from flask import Flask, request, render_template, redirect
 from xrpl.constants import CryptoAlgorithm
 from xrpl.clients import WebsocketClient, JsonRpcClient
 from xrpl.transaction import autofill_and_sign, sign
@@ -170,4 +170,4 @@ def wallet_trustlines():
     return trustlines, 200
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8080, debug=True)
+    app.run(host="0.0.0.0", port=443, debug=True, ssl_context="adhoc", threaded=True)
