@@ -11,7 +11,7 @@ venv\Scripts\activate.bat
 pip install -r requirements.txt
 python app.py
 ```
-Linux
+Linux (This was tested on: Ubuntu 20.04.6 LTS (GNU/Linux 5.4.0-190-generic x86_64))
 ```
 python3 -m venv venv
 source venv/bin/activate
