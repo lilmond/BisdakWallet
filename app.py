@@ -1,12 +1,12 @@
 from flask import Flask, request, render_template, redirect
+from xrpl.clients import JsonRpcClient
 from xrpl.constants import CryptoAlgorithm
-from xrpl.clients import WebsocketClient, JsonRpcClient
-from xrpl.transaction import autofill_and_sign, sign
 from xrpl.models.amounts import IssuedCurrencyAmount
 from xrpl.models import requests, Payment
-from xrpl.wallet import Wallet
+from xrpl.transaction import autofill_and_sign, sign
 from xrpl.utils.str_conversions import hex_to_str
 from xrpl.utils import drops_to_xrp, xrp_to_drops
+from xrpl.wallet import Wallet
 import toml
 
 CONFIG = toml.load("./config/config.toml")
@@ -86,7 +86,7 @@ def payment_send():
             return {"error": "Amount too small."}
     else:
         currency_issuer = currency["account"]
-        amount = IssuedCurrencyAmount(currency=currency_name, issuer=currency_issuer, value=amount)
+        amount = IssuedCurrencyAmount(currency=currency_name, issuer=currency_issuer, value=str(amount))
 
     try:
         network_id = 21337 if server_type == "Xahau" else None
@@ -94,7 +94,7 @@ def payment_send():
         signed = autofill_and_sign(transaction=payment_tx, client=client, wallet=xrpl_wallet)
         result = client.request(request=requests.SubmitOnly(tx_blob=signed.blob())).result
     except Exception as e:
-        print(e)
+        print(f"dawdaw error: {e}")
         return {"error": str(e)}, 400
     
     return result, 200
