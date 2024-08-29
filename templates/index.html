@@ -13,6 +13,8 @@
         <div class="main-container" id="main-container">
             <p class="error-message" id="error-message"></p>
             <p class="success-message" id="success-message"></p>
+            <button class="input-right-upper-button" id="destination-clear-button">CLEAR</button>
+            <button class="input-right-upper-button" id="destination-paste-button">PASTE</button>
             <label for="destination_address">DESTINATION ADDRESS:</label>
             <input name="destination_address" id="destination_address" type="text"/>
             <label for="destination_tag">DESTINATION TAG:</label>
@@ -22,7 +24,7 @@
                 <option selected disabled hidden>Please select a wallet.</option>
             </select>
             <label for="amount">AMOUNT:</label>
-            <button id="max-amount-button" class="max-amount-button">MAX</button>
+            <button id="max-amount-button" class="input-right-upper-button">MAX</button>
             <input name="amount" id="amount" type="number"/>
             <hr class="separator">
             <label for="server">SERVER:</label>
@@ -30,6 +32,7 @@
                 {%for server_type in servers%}{%for server_address in servers[server_type]%}<option value="{{server_address}}">{{server_address}} ({{server_type}})</option>{%endfor%}{%endfor%}
             </select>
             <label for="wallet">WALLET:</label>
+            <button id="copy-wallet-button" class="input-right-upper-button">COPY</button>
             <select name="wallet" id="wallet">
                 <option selected disabled hidden>Select a wallet here!</option>
                 {%for wallet_address in wallets%}<option value="{{wallet_address}}">{{wallet_address}}</option>{%endfor%}
@@ -52,6 +55,9 @@
         const successMessage = document.getElementById("success-message");
         const mainContainer = document.getElementById("main-container");
         const maxAmountButton = document.getElementById("max-amount-button");
+        const copyWalletButton = document.getElementById("copy-wallet-button");
+        const destinationClearButton = document.getElementById("destination-clear-button");
+        const destinationPasteButton = document.getElementById("destination-paste-button");
 
         function showError(error_message) {
             errorMessage.innerText = error_message;
@@ -63,12 +69,12 @@
             successMessage.innerHTML = success_message;
             successMessage.style.display = "block";
             mainContainer.scrollTo(0, 0);
-        }
+        };
 
         function hideMessages() {
             errorMessage.style.display = "none";
             successMessage.style.display = "none";
-        }
+        };
 
         errorMessage.onclick = (event) => {
             errorMessage.style.display = "none";
@@ -76,12 +82,12 @@
 
         successMessage.onclick = (event) => {
             successMessage.style.display = "none";
-        }
+        };
 
         async function loadWallet() {
             hideMessages();
 
-            currency.innerHTML = "<option selected disabled hidden>Fetching wallet. Please wait...</options>";
+            currency.innerHTML = "<option selected disabled hidden>Fetching wallet... Please wait!</options>";
 
             const accountBalance = await fetch(`/wallet/balance?wallet_address=${wallet.value}&ws_address=${server.value}`, {
                 method: "GET"
@@ -90,7 +96,7 @@
             if ("error" in accountBalance) {
                 currency.innerHTML = "<option selected disabled hidden>Please select a wallet.</option>";
                 return showError(`Error: ${accountBalance["error"]}`);
-            }
+            };
             
             const accountLines = await fetch(`/wallet/trustlines?wallet_address=${wallet.value}&ws_address=${server.value}`, {
                 method: "GET"
@@ -123,8 +129,22 @@
         maxAmountButton.onclick = () => {
             try {
                 amount.value = JSON.parse(currency.value)["balance"];
-            } catch {}
-        }
+            } catch {};
+        };
+
+        copyWalletButton.onclick = async () => {
+            if (wallet.value != "Select a wallet here!") {
+                await navigator.clipboard.writeText(wallet.value);
+            }
+        };
+
+        destinationClearButton.onclick = () => {
+            destinationAddress.value = "";
+        };
+
+        destinationPasteButton.onclick = async () => {
+            destinationAddress.value = await navigator.clipboard.readText();
+        };
 
         sendButton.onclick = async () => {
             hideMessages();
@@ -146,28 +166,28 @@
             }
             else if (password.value.trim() == "") {
                 return showError("Error: Missing password.");
-            }
+            };
 
             let destination_tag = destinationTag.value.trim();
             let amount_value = parseFloat(amount.value.trim());
 
             if (!amount_value) {
                 return showError("Error: Invalid amount value.");
-            }
+            };
 
             if (amount_value > JSON.parse(currency.value).balance) {
                 return showError("Error: Insufficient balance.");
-            }
+            };
 
             if (destination_tag == "") {
                 destination_tag = null;
             } else {
-                destination_tag = parseInt(destination_tag)
-            }
+                destination_tag = parseInt(destination_tag);
+            };
 
             if (amount_value < 0) {
                 return showError("Error: Amount value must be greater than 0!");
-            }
+            };
 
             const payload = {
                 destination_address: destinationAddress.value.trim(),
@@ -176,7 +196,7 @@
                 amount: amount_value,
                 server: server.value,
                 wallet: wallet.value,
-                password: password.value,
+                password: password.value
             };
 
             sendButton.disabled = true;
@@ -206,24 +226,24 @@
                     }
                     showSuccess(`Success: ${response.engine_result} | <a href="${tx_url}" target="_blank">View Transaction</a>`);
                 }
-            }
+            };
 
             sendButton.disabled = false;
-            sendButton.style.backgroundColor = "#0030d0"
+            sendButton.style.backgroundColor = "#0030d0";
         };
+
+        destinationAddress.value = localStorage.getItem("destinationAddressValue");
+        destinationTag.value = localStorage.getItem("destinationTagValue");
+        amount.value = localStorage.getItem("amountValue");
 
         destinationAddress.onchange = () => {
             localStorage.setItem("destinationAddressValue", destinationAddress.value);
         };
         destinationTag.onchange = () => {
             localStorage.setItem("destinationTagValue", destinationTag.value);
-        }
+        };
         amount.onchange = () => {
             localStorage.setItem("amountValue", amount.value);
-        }
-
-        destinationAddress.value = localStorage.getItem("destinationAddressValue");
-        destinationTag.value = localStorage.getItem("destinationTagValue");
-        amount.value = localStorage.getItem("amountValue");
+        };
     </script>
 </html>
